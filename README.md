@@ -8,6 +8,57 @@ The image bundles:
 - **Windows JMODs** – module archive required by `jlink` to produce a Windows JRE (separated since JEP 493 / Java 24+)
 - **`jlink-windows` script** – a helper in `PATH` that pre-configures the standard flags, reducing verbosity
 
+## Usage as a GitHub Action
+
+The simplest way to use this in your CI — just reference it in a workflow step:
+
+```yaml
+- name: Generate Windows JRE
+  uses: likesistemas/docker-java-jlink@main  # pin to a specific tag or SHA in production
+  with:
+    java-version: '21'
+    modules: 'java.base,java.desktop,java.xml,java.naming,java.security.jgss,java.security.sasl,jdk.crypto.cryptoki,jdk.crypto.ec,jdk.naming.dns,jdk.security.auth,jdk.security.jgss'
+    output: 'jre-windows'
+```
+
+### Action inputs
+
+| Input | Description | Required | Default |
+|---|---|---|---|
+| `java-version` | Java major version (e.g. `21`) | yes | `21` |
+| `modules` | Comma-separated list of modules to include | yes | `java.base` |
+| `output` | Output directory (relative to workspace) | yes | `jre-windows` |
+
+### Action outputs
+
+| Output | Description |
+|---|---|
+| `jre-path` | Absolute path to the generated JRE directory |
+
+### Full workflow example
+
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate Windows JRE
+        id: jre
+        uses: likesistemas/docker-java-jlink@main  # pin to a specific tag or SHA in production
+        with:
+          java-version: '21'
+          modules: 'java.base,java.desktop,java.xml'
+          output: 'jre-windows'
+
+      - name: Upload JRE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jre-windows
+          path: ${{ steps.jre.outputs.jre-path }}
+```
+
 ## Usage in a Dockerfile
 
 ```dockerfile
