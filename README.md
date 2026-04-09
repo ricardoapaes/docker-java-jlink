@@ -96,6 +96,10 @@ docker build \
 
 | Tag | Description |
 |---|---|
-| `latest` | Most recent build from `main` |
+| `latest` | Most recent build from `main` (Java 25) |
+| `25` | Java 25 (LTS) |
+| `25.0.2_10` | Specific Java 25 version and build |
 | `21` | Java 21 (LTS) |
-| `21.0.7_6` | Specific Java version and build |
+| `21.0.7_6` | Specific Java 21 version and build |
+| `11` | Java 11 (LTS) |
+| `11.0.30_7` | Specific Java 11 version and build |

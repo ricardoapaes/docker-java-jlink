@@ -21,12 +21,17 @@ RUN wget -q "https://github.com/adoptium/temurin${JAVA_VERSION%%.*}-binaries/rel
  && rm "OpenJDK${JAVA_VERSION%%.*}U-jdk_x64_windows_hotspot_${JAVA_VERSION}_${JAVA_BUILD}.zip" \
  && mv "jdk-${JAVA_VERSION}+${JAVA_BUILD}" jdk-windows
 
-# Download Windows JMODs package (JEP 493: not bundled in JDK from Java 24+)
-RUN wget -q "https://github.com/adoptium/temurin${JAVA_VERSION%%.*}-binaries/releases/download/jdk-${JAVA_VERSION}%2B${JAVA_BUILD}/OpenJDK${JAVA_VERSION%%.*}U-jmods_x64_windows_hotspot_${JAVA_VERSION}_${JAVA_BUILD}.zip" \
- && unzip -q "OpenJDK${JAVA_VERSION%%.*}U-jmods_x64_windows_hotspot_${JAVA_VERSION}_${JAVA_BUILD}.zip" -d jmods-windows-pkg \
- && rm "OpenJDK${JAVA_VERSION%%.*}U-jmods_x64_windows_hotspot_${JAVA_VERSION}_${JAVA_BUILD}.zip" \
- && JMODS_DIR=$(find /opt/jmods-windows-pkg -name "*.jmod" | head -1 | xargs dirname) \
- && ln -s "${JMODS_DIR}" /opt/jmods-windows
+# Download Windows JMODs (separate package for Java 24+ per JEP 493; bundled in JDK for older versions)
+RUN MAJOR="${JAVA_VERSION%%.*}"; \
+    if [ "$MAJOR" -ge 24 ]; then \
+      wget -q "https://github.com/adoptium/temurin${MAJOR}-binaries/releases/download/jdk-${JAVA_VERSION}%2B${JAVA_BUILD}/OpenJDK${MAJOR}U-jmods_x64_windows_hotspot_${JAVA_VERSION}_${JAVA_BUILD}.zip" \
+      && unzip -q "OpenJDK${MAJOR}U-jmods_x64_windows_hotspot_${JAVA_VERSION}_${JAVA_BUILD}.zip" -d jmods-windows-pkg \
+      && rm "OpenJDK${MAJOR}U-jmods_x64_windows_hotspot_${JAVA_VERSION}_${JAVA_BUILD}.zip" \
+      && JMODS_DIR=$(find /opt/jmods-windows-pkg -name "*.jmod" | head -1 | xargs dirname) \
+      && ln -s "${JMODS_DIR}" /opt/jmods-windows; \
+    else \
+      ln -s /opt/jdk-windows/jmods /opt/jmods-windows; \
+    fi
 
 ENV PATH="/opt/jdk-linux/bin:${PATH}"
 

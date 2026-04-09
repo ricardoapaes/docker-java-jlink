@@ -31,8 +31,15 @@ jobs:
     strategy:
       matrix:
         include:
+          - java_version: '11.0.30'
+            java_build: '7'
+            is_latest: false
           - java_version: '21.0.7'
             java_build: '6'
+            is_latest: false
+          - java_version: '25.0.2'
+            java_build: '10'
+            is_latest: true
 
     steps:
       - name: Checkout repository
@@ -68,7 +75,7 @@ jobs:
           tags: |
             type=raw,value=${{ steps.vars.outputs.java_major }}
             type=raw,value=${{ steps.vars.outputs.java_version }}_${{ steps.vars.outputs.java_build }}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=latest,enable=${{ matrix.is_latest == true && github.ref == 'refs/heads/main' }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
