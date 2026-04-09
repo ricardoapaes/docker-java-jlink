@@ -1,0 +1,82 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      java_version:
+        description: 'Java version (e.g. 21.0.7)'
+        required: true
+        default: '21.0.7'
+      java_build:
+        description: 'Java build number (e.g. 6)'
+        required: true
+        default: '6'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        include:
+          - java_version: '21.0.7'
+            java_build: '6'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve Java version and build
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            JAVA_VERSION="${{ github.event.inputs.java_version }}"
+            JAVA_BUILD="${{ github.event.inputs.java_build }}"
+          else
+            JAVA_VERSION="${{ matrix.java_version }}"
+            JAVA_BUILD="${{ matrix.java_build }}"
+          fi
+          JAVA_MAJOR="${JAVA_VERSION%%.*}"
+          echo "java_version=${JAVA_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "java_build=${JAVA_BUILD}"     >> "$GITHUB_OUTPUT"
+          echo "java_major=${JAVA_MAJOR}"     >> "$GITHUB_OUTPUT"
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ steps.vars.outputs.java_major }}
+            type=raw,value=${{ steps.vars.outputs.java_version }}_${{ steps.vars.outputs.java_build }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            JAVA_VERSION=${{ steps.vars.outputs.java_version }}
+            JAVA_BUILD=${{ steps.vars.outputs.java_build }}

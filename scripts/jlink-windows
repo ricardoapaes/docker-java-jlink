@@ -1,0 +1,29 @@
+#!/bin/sh
+# jlink-windows: Generates a Windows JRE using the cross-compilation JMODs.
+#
+# Usage:
+#   jlink-windows --add-modules <modules> --output <dir> [jlink options...]
+#
+# Default flags applied automatically:
+#   --module-path /opt/jmods-windows
+#   --strip-debug
+#   --no-man-pages
+#   --no-header-files
+#   --compress=zip-6
+#
+# The Windows JDK binaries (java.exe, keytool.exe, jvm.dll) are at /opt/jdk-windows.
+#
+# Example:
+#   jlink-windows \
+#     --add-modules java.base,java.desktop,java.xml \
+#     --output /output/jre-windows
+
+set -e
+
+exec /opt/jdk-linux/bin/jlink \
+    --module-path /opt/jmods-windows \
+    --strip-debug \
+    --no-man-pages \
+    --no-header-files \
+    --compress=zip-6 \
+    "$@"
