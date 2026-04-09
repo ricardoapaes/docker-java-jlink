@@ -1,0 +1,42 @@
+name: 'jlink Windows JRE'
+description: 'Generates a Windows JRE with jlink using Adoptium Temurin JDKs'
+author: 'likesistemas'
+
+branding:
+  icon: 'package'
+  color: 'orange'
+
+inputs:
+  java-version:
+    description: 'Java major version to use (e.g. 21). Must match a published image tag.'
+    required: true
+    default: '21'
+  modules:
+    description: 'Comma-separated list of Java modules to include in the JRE'
+    required: true
+    default: 'java.base'
+  output:
+    description: 'Output directory for the generated JRE, relative to the workspace'
+    required: true
+    default: 'jre-windows'
+
+outputs:
+  jre-path:
+    description: 'Absolute path to the generated JRE directory'
+    value: ${{ steps.jlink.outputs.jre-path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Generate Windows JRE with jlink
+      id: jlink
+      shell: bash
+      run: |
+        OUTPUT_DIR="${{ github.workspace }}/${{ inputs.output }}"
+        docker run --rm \
+          -v "${{ github.workspace }}:/workspace" \
+          "ghcr.io/likesistemas/docker-java-jlink:${{ inputs.java-version }}" \
+          jlink-windows \
+          --add-modules "${{ inputs.modules }}" \
+          --output "/workspace/${{ inputs.output }}"
+        echo "jre-path=${OUTPUT_DIR}" >> "$GITHUB_OUTPUT"
