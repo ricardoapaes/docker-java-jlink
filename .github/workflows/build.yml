@@ -22,43 +22,42 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Set matrix
+        id: set-matrix
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo 'matrix={"include":[{"java_version":"${{ github.event.inputs.java_version }}","java_build":"${{ github.event.inputs.java_build }}","is_latest":false}]}' >> "$GITHUB_OUTPUT"
+          else
+            echo 'matrix={"include":[{"java_version":"11.0.30","java_build":"7","is_latest":false},{"java_version":"21.0.7","java_build":"6","is_latest":false},{"java_version":"25.0.2","java_build":"10","is_latest":true}]}' >> "$GITHUB_OUTPUT"
+          fi
+
   build:
+    needs: prepare
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
 
     strategy:
-      matrix:
-        include:
-          - java_version: '11.0.30'
-            java_build: '7'
-            is_latest: false
-          - java_version: '21.0.7'
-            java_build: '6'
-            is_latest: false
-          - java_version: '25.0.2'
-            java_build: '10'
-            is_latest: true
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Resolve Java version and build
         id: vars
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            JAVA_VERSION="${{ github.event.inputs.java_version }}"
-            JAVA_BUILD="${{ github.event.inputs.java_build }}"
-          else
-            JAVA_VERSION="${{ matrix.java_version }}"
-            JAVA_BUILD="${{ matrix.java_build }}"
-          fi
-          JAVA_MAJOR="${JAVA_VERSION%%.*}"
-          echo "java_version=${JAVA_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "java_build=${JAVA_BUILD}"     >> "$GITHUB_OUTPUT"
-          echo "java_major=${JAVA_MAJOR}"     >> "$GITHUB_OUTPUT"
+          JAVA_MAJOR="${{ matrix.java_version }}"
+          JAVA_MAJOR="${JAVA_MAJOR%%.*}"
+          echo "java_version=${{ matrix.java_version }}" >> "$GITHUB_OUTPUT"
+          echo "java_build=${{ matrix.java_build }}"     >> "$GITHUB_OUTPUT"
+          echo "java_major=${JAVA_MAJOR}"                >> "$GITHUB_OUTPUT"
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
