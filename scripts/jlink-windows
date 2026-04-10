@@ -9,7 +9,7 @@
 #   --strip-debug
 #   --no-man-pages
 #   --no-header-files
-#   --compress=zip-6
+#   --compress=zip-6  (Java 21+) or --compress=2 (Java 11–17, chosen automatically)
 #
 # The Windows JDK binaries (java.exe, keytool.exe, jvm.dll) are at /opt/jdk-windows.
 #
@@ -20,10 +20,18 @@
 
 set -e
 
+# --compress syntax changed in Java 21: zip-N (21+) vs numeric 0|1|2 (older)
+JAVA_MAJOR=$(/opt/jdk-linux/bin/java -version 2>&1 | sed -n 's/.*version "\([0-9]*\).*/\1/p')
+if [ "$JAVA_MAJOR" -ge 21 ] 2>/dev/null; then
+    COMPRESS="--compress=zip-6"
+else
+    COMPRESS="--compress=2"
+fi
+
 exec /opt/jdk-linux/bin/jlink \
     --module-path /opt/jmods-windows \
     --strip-debug \
     --no-man-pages \
     --no-header-files \
-    --compress=zip-6 \
+    $COMPRESS \
     "$@"

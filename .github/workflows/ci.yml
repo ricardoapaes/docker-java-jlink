@@ -1,0 +1,39 @@
+name: CI - Pull Request
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - java_version: '11.0.30'
+            java_build: '7'
+          - java_version: '21.0.7'
+            java_build: '6'
+          - java_version: '25.0.2'
+            java_build: '10'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Smoke test — jlink-windows produces a valid JRE
+        run: |
+          IMAGE_ID=$(docker build \
+            --build-arg JAVA_VERSION=${{ matrix.java_version }} \
+            --build-arg JAVA_BUILD=${{ matrix.java_build }} \
+            -q .)
+          docker run --rm "$IMAGE_ID" sh -c \
+            'jlink-windows --add-modules java.base --output /tmp/jre-smoke \
+             && test -f /tmp/jre-smoke/release \
+             && echo "OK: release file present"'
