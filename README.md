@@ -3,6 +3,7 @@
 Docker image for generating a Windows JRE using `jlink`, intended for use in CI pipelines.
 
 The image bundles:
+
 - **Linux JDK** – provides the `jlink` tool
 - **Windows JDK** – provides Windows executables (`java.exe`, `keytool.exe`, `jvm.dll`)
 - **Windows JMODs** – module archive required by `jlink` to produce a Windows JRE (separated since JEP 493 / Java 24+)
@@ -14,7 +15,7 @@ The simplest way to use this in your CI — just reference it in a workflow step
 
 ```yaml
 - name: Generate Windows JRE
-  uses: likesistemas/docker-java-jlink@main  # pin to a specific tag or SHA in production
+  uses: ricardoapaes/docker-java-jlink@main  # pin to a specific tag or SHA in production
   with:
     java-version: '21'
     modules: 'java.base,java.desktop,java.xml,java.naming,java.security.jgss,java.security.sasl,jdk.crypto.cryptoki,jdk.crypto.ec,jdk.naming.dns,jdk.security.auth,jdk.security.jgss'
@@ -46,7 +47,7 @@ jobs:
 
       - name: Generate Windows JRE
         id: jre
-        uses: likesistemas/docker-java-jlink@main  # pin to a specific tag or SHA in production
+        uses: ricardoapaes/docker-java-jlink@main  # pin to a specific tag or SHA in production
         with:
           java-version: '21'
           modules: 'java.base,java.desktop,java.xml'
@@ -62,7 +63,7 @@ jobs:
 ## Usage in a Dockerfile
 
 ```dockerfile
-FROM ghcr.io/likesistemas/docker-java-jlink:21 AS jre
+FROM ghcr.io/ricardoapaes/docker-java-jlink:21 AS jre
 
 RUN jlink-windows \
     --add-modules java.base,java.desktop,java.xml,java.naming,java.security.jgss,java.security.sasl,jdk.crypto.cryptoki,jdk.crypto.ec,jdk.naming.dns,jdk.security.auth,jdk.security.jgss \

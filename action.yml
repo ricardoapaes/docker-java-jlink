@@ -1,6 +1,6 @@
 name: 'jlink Windows JRE'
 description: 'Generates a Windows JRE with jlink using Adoptium Temurin JDKs'
-author: 'likesistemas'
+author: 'ricardoapaes'
 
 branding:
   icon: 'package'
@@ -35,7 +35,7 @@ runs:
         OUTPUT_DIR="${{ github.workspace }}/${{ inputs.output }}"
         docker run --rm \
           -v "${{ github.workspace }}:/workspace" \
-          "ghcr.io/likesistemas/docker-java-jlink:${{ inputs.java-version }}" \
+          "ghcr.io/ricardoapaes/docker-java-jlink:${{ inputs.java-version }}" \
           jlink-windows \
           --add-modules "${{ inputs.modules }}" \
           --output "/workspace/${{ inputs.output }}"
