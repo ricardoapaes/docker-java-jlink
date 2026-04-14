@@ -8,6 +8,8 @@ The image bundles:
 - **Windows JDK** – provides Windows executables (`java.exe`, `keytool.exe`, `jvm.dll`)
 - **Windows JMODs** – module archive required by `jlink` to produce a Windows JRE (separated since JEP 493 / Java 24+)
 - **`jlink-windows` script** – a helper in `PATH` that pre-configures the standard flags, reducing verbosity
+- **Windows x86-32 JDK + JMODs** – 32-bit Windows executables and modules (Java 11 and 17 only; bundled when `JAVA_VERSION_X86` is provided)
+- **`jlink-windows-x86` script** – same as `jlink-windows` but targets the x86-32 JMODs (Java 11 and 17 only)
 
 ## Usage as a GitHub Action
 
@@ -29,6 +31,7 @@ The simplest way to use this in your CI — just reference it in a workflow step
 | `java-version` | Java major version (e.g. `21`) | yes | `21` |
 | `modules` | Comma-separated list of modules to include | yes | `java.base` |
 | `output` | Output directory (relative to workspace) | yes | `jre-windows` |
+| `arch` | Target architecture: `x64` or `x86` (Java 11/17 only) | no | `x64` |
 
 ### Action outputs
 
@@ -84,13 +87,34 @@ Any extra arguments are forwarded directly to `jlink`.
 
 The Windows JDK (for copying executables into your image) is available at `/opt/jdk-windows`.
 
+### x86-32 (Java 11 and 17 only)
+
+```dockerfile
+FROM ghcr.io/ricardoapaes/docker-java-jlink:17 AS jre
+
+RUN jlink-windows-x86 \
+    --add-modules java.base,java.desktop,java.xml \
+    --output /output/jre-windows-x86
+```
+
+The x86-32 Windows JDK is at `/opt/jdk-windows-x86`.
+
 ## Building the image locally
 
 ```bash
+# x64 only
 docker build \
   --build-arg JAVA_VERSION=21.0.7 \
   --build-arg JAVA_BUILD=6 \
   -t docker-java-jlink:21 .
+
+# x64 + x86-32 (Java 11 or 17)
+docker build \
+  --build-arg JAVA_VERSION=17.0.18 \
+  --build-arg JAVA_BUILD=8 \
+  --build-arg JAVA_VERSION_X86=17.0.17 \
+  --build-arg JAVA_BUILD_X86=10 \
+  -t docker-java-jlink:17 .
 ```
 
 ## Available image tags
@@ -102,5 +126,9 @@ docker build \
 | `25.0.2_10` | Specific Java 25 version and build |
 | `21` | Java 21 (LTS) |
 | `21.0.7_6` | Specific Java 21 version and build |
-| `11` | Java 11 (LTS) |
+| `17` | Java 17 (LTS) — includes x86-32 support |
+| `17.0.18_8` | Specific Java 17 version and build |
+| `11` | Java 11 (LTS) — includes x86-32 support |
 | `11.0.30_7` | Specific Java 11 version and build |
+
+> **x86-32 support** is only available in the `11` and `17` image tags. Use `jlink-windows-x86` or set `arch: x86` in the action.

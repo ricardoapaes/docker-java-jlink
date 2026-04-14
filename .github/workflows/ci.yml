@@ -18,6 +18,14 @@ jobs:
         include:
           - java_version: '11.0.30'
             java_build: '7'
+            java_version_x86: '11.0.29'
+            java_build_x86: '7'
+            x86: true
+          - java_version: '17.0.18'
+            java_build: '8'
+            java_version_x86: '17.0.17'
+            java_build_x86: '10'
+            x86: true
           - java_version: '21.0.7'
             java_build: '6'
           - java_version: '25.0.2'
@@ -25,15 +33,30 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Smoke test — jlink-windows produces a valid JRE
         run: |
           IMAGE_ID=$(docker build \
             --build-arg JAVA_VERSION=${{ matrix.java_version }} \
             --build-arg JAVA_BUILD=${{ matrix.java_build }} \
+            ${{ matrix.x86 && format('--build-arg JAVA_VERSION_X86={0} --build-arg JAVA_BUILD_X86={1}', matrix.java_version_x86, matrix.java_build_x86) || '' }} \
             -q .)
           docker run --rm "$IMAGE_ID" sh -c \
             'jlink-windows --add-modules java.base --output /tmp/jre-smoke \
              && test -f /tmp/jre-smoke/release \
              && echo "OK: release file present"'
+
+      - name: Smoke test — jlink-windows-x86 produces a valid JRE
+        if: ${{ matrix.x86 == true }}
+        run: |
+          IMAGE_ID=$(docker build \
+            --build-arg JAVA_VERSION=${{ matrix.java_version }} \
+            --build-arg JAVA_BUILD=${{ matrix.java_build }} \
+            --build-arg JAVA_VERSION_X86=${{ matrix.java_version_x86 }} \
+            --build-arg JAVA_BUILD_X86=${{ matrix.java_build_x86 }} \
+            -q .)
+          docker run --rm "$IMAGE_ID" sh -c \
+            'jlink-windows-x86 --add-modules java.base --output /tmp/jre-smoke-x86 \
+             && test -f /tmp/jre-smoke-x86/release \
+             && echo "OK: x86 release file present"'
