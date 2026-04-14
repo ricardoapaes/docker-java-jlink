@@ -2,6 +2,9 @@ FROM debian:stable-slim
 
 ARG JAVA_VERSION
 ARG JAVA_BUILD
+# x86-32 Windows JDK may have a different release than the x64 builds
+ARG JAVA_VERSION_X86
+ARG JAVA_BUILD_X86
 
 WORKDIR /opt
 
@@ -34,12 +37,13 @@ RUN MAJOR="${JAVA_VERSION%%.*}"; \
     fi
 
 # Download Windows x86-32 JDK and its JMODs (only available for Java 11 and 17)
+# Uses JAVA_VERSION_X86/JAVA_BUILD_X86 because x86 releases may lag behind x64
 RUN MAJOR="${JAVA_VERSION%%.*}"; \
-    if [ "$MAJOR" -le 17 ]; then \
-      wget -q "https://github.com/adoptium/temurin${MAJOR}-binaries/releases/download/jdk-${JAVA_VERSION}%2B${JAVA_BUILD}/OpenJDK${MAJOR}U-jdk_x86-32_windows_hotspot_${JAVA_VERSION}_${JAVA_BUILD}.zip" \
-      && unzip -q "OpenJDK${MAJOR}U-jdk_x86-32_windows_hotspot_${JAVA_VERSION}_${JAVA_BUILD}.zip" \
-      && rm "OpenJDK${MAJOR}U-jdk_x86-32_windows_hotspot_${JAVA_VERSION}_${JAVA_BUILD}.zip" \
-      && mv "jdk-${JAVA_VERSION}+${JAVA_BUILD}" jdk-windows-x86 \
+    if [ "$MAJOR" -le 17 ] && [ -n "${JAVA_VERSION_X86}" ]; then \
+      wget -q "https://github.com/adoptium/temurin${MAJOR}-binaries/releases/download/jdk-${JAVA_VERSION_X86}%2B${JAVA_BUILD_X86}/OpenJDK${MAJOR}U-jdk_x86-32_windows_hotspot_${JAVA_VERSION_X86}_${JAVA_BUILD_X86}.zip" \
+      && unzip -q "OpenJDK${MAJOR}U-jdk_x86-32_windows_hotspot_${JAVA_VERSION_X86}_${JAVA_BUILD_X86}.zip" \
+      && rm "OpenJDK${MAJOR}U-jdk_x86-32_windows_hotspot_${JAVA_VERSION_X86}_${JAVA_BUILD_X86}.zip" \
+      && mv "jdk-${JAVA_VERSION_X86}+${JAVA_BUILD_X86}" jdk-windows-x86 \
       && ln -s /opt/jdk-windows-x86/jmods /opt/jmods-windows-x86; \
     fi
 
