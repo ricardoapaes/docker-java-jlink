@@ -1,0 +1,40 @@
+#!/bin/sh
+# jlink-windows-x86: Generates a Windows x86-32 JRE using the cross-compilation JMODs.
+# Only supported for Java 11 and 17.
+#
+# Usage:
+#   jlink-windows-x86 --add-modules <modules> --output <dir> [jlink options...]
+#
+# Default flags applied automatically:
+#   --module-path /opt/jmods-windows-x86
+#   --strip-debug
+#   --no-man-pages
+#   --no-header-files
+#   --compress=2  (Java 11–17 syntax)
+#
+# Example:
+#   jlink-windows-x86 \
+#     --add-modules java.base,java.desktop,java.xml \
+#     --output /output/jre-windows-x86
+
+set -e
+
+JAVA_MAJOR=$(/opt/jdk-linux/bin/java -version 2>&1 | sed -n 's/.*version "\([0-9]*\).*/\1/p')
+
+if [ "$JAVA_MAJOR" -gt 17 ] 2>/dev/null; then
+    echo "Error: x86-32 Windows JRE generation is only supported for Java 11 and 17." >&2
+    exit 1
+fi
+
+if [ ! -d /opt/jmods-windows-x86 ]; then
+    echo "Error: /opt/jmods-windows-x86 not found. This image does not include x86-32 support." >&2
+    exit 1
+fi
+
+exec /opt/jdk-linux/bin/jlink \
+    --module-path /opt/jmods-windows-x86 \
+    --strip-debug \
+    --no-man-pages \
+    --no-header-files \
+    --compress=2 \
+    "$@"

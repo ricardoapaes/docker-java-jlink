@@ -33,9 +33,20 @@ RUN MAJOR="${JAVA_VERSION%%.*}"; \
       ln -s /opt/jdk-windows/jmods /opt/jmods-windows; \
     fi
 
+# Download Windows x86-32 JDK and its JMODs (only available for Java 11 and 17)
+RUN MAJOR="${JAVA_VERSION%%.*}"; \
+    if [ "$MAJOR" -le 17 ]; then \
+      wget -q "https://github.com/adoptium/temurin${MAJOR}-binaries/releases/download/jdk-${JAVA_VERSION}%2B${JAVA_BUILD}/OpenJDK${MAJOR}U-jdk_x86-32_windows_hotspot_${JAVA_VERSION}_${JAVA_BUILD}.zip" \
+      && unzip -q "OpenJDK${MAJOR}U-jdk_x86-32_windows_hotspot_${JAVA_VERSION}_${JAVA_BUILD}.zip" \
+      && rm "OpenJDK${MAJOR}U-jdk_x86-32_windows_hotspot_${JAVA_VERSION}_${JAVA_BUILD}.zip" \
+      && mv "jdk-${JAVA_VERSION}+${JAVA_BUILD}" jdk-windows-x86 \
+      && ln -s /opt/jdk-windows-x86/jmods /opt/jmods-windows-x86; \
+    fi
+
 ENV PATH="/opt/jdk-linux/bin:${PATH}"
 
 COPY scripts/jlink-windows /usr/local/bin/jlink-windows
-RUN chmod +x /usr/local/bin/jlink-windows
+COPY scripts/jlink-windows-x86 /usr/local/bin/jlink-windows-x86
+RUN chmod +x /usr/local/bin/jlink-windows /usr/local/bin/jlink-windows-x86
 
 WORKDIR /workspace
