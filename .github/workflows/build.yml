@@ -16,6 +16,14 @@ on:
         description: 'Java build number (e.g. 6)'
         required: true
         default: '6'
+      java_version_x86:
+        description: 'Java x86-32 version (e.g. 17.0.17, only for Java 11/17)'
+        required: false
+        default: ''
+      java_build_x86:
+        description: 'Java x86-32 build number (e.g. 10, only for Java 11/17)'
+        required: false
+        default: ''
 
 env:
   REGISTRY: ghcr.io
@@ -31,9 +39,15 @@ jobs:
         id: set-matrix
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo 'matrix={"include":[{"java_version":"${{ github.event.inputs.java_version }}","java_build":"${{ github.event.inputs.java_build }}","is_latest":false}]}' >> "$GITHUB_OUTPUT"
+            echo 'matrix={"include":[{"java_version":"${{ github.event.inputs.java_version }}","java_build":"${{ github.event.inputs.java_build }}","java_version_x86":"${{ github.event.inputs.java_version_x86 }}","java_build_x86":"${{ github.event.inputs.java_build_x86 }}","is_latest":false}]}' >> "$GITHUB_OUTPUT"
           else
-            echo 'matrix={"include":[{"java_version":"11.0.30","java_build":"7","is_latest":false},{"java_version":"21.0.7","java_build":"6","is_latest":false},{"java_version":"25.0.2","java_build":"10","is_latest":true}]}' >> "$GITHUB_OUTPUT"
+            MATRIX='{"include":['
+            MATRIX+='{"java_version":"11.0.30","java_build":"7","java_version_x86":"11.0.29","java_build_x86":"7","is_latest":false},'
+            MATRIX+='{"java_version":"17.0.18","java_build":"8","java_version_x86":"17.0.17","java_build_x86":"10","is_latest":false},'
+            MATRIX+='{"java_version":"21.0.7","java_build":"6","is_latest":false},'
+            MATRIX+='{"java_version":"25.0.2","java_build":"10","is_latest":true}'
+            MATRIX+=']}'
+            echo "matrix=${MATRIX}" >> "$GITHUB_OUTPUT"
           fi
 
   build:
@@ -55,9 +69,11 @@ jobs:
         run: |
           JAVA_MAJOR="${{ matrix.java_version }}"
           JAVA_MAJOR="${JAVA_MAJOR%%.*}"
-          echo "java_version=${{ matrix.java_version }}" >> "$GITHUB_OUTPUT"
-          echo "java_build=${{ matrix.java_build }}"     >> "$GITHUB_OUTPUT"
-          echo "java_major=${JAVA_MAJOR}"                >> "$GITHUB_OUTPUT"
+          echo "java_version=${{ matrix.java_version }}"         >> "$GITHUB_OUTPUT"
+          echo "java_build=${{ matrix.java_build }}"             >> "$GITHUB_OUTPUT"
+          echo "java_major=${JAVA_MAJOR}"                        >> "$GITHUB_OUTPUT"
+          echo "java_version_x86=${{ matrix.java_version_x86 }}" >> "$GITHUB_OUTPUT"
+          echo "java_build_x86=${{ matrix.java_build_x86 }}"     >> "$GITHUB_OUTPUT"
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
@@ -86,3 +102,5 @@ jobs:
           build-args: |
             JAVA_VERSION=${{ steps.vars.outputs.java_version }}
             JAVA_BUILD=${{ steps.vars.outputs.java_build }}
+            JAVA_VERSION_X86=${{ steps.vars.outputs.java_version_x86 }}
+            JAVA_BUILD_X86=${{ steps.vars.outputs.java_build_x86 }}

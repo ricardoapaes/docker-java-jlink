@@ -19,6 +19,10 @@ inputs:
     description: 'Output directory for the generated JRE, relative to the workspace'
     required: true
     default: 'jre-windows'
+  arch:
+    description: 'Target architecture: x64 (default) or x86. x86 is only supported for Java 11 and 17.'
+    required: false
+    default: 'x64'
 
 outputs:
   jre-path:
@@ -33,10 +37,14 @@ runs:
       shell: bash
       run: |
         OUTPUT_DIR="${{ github.workspace }}/${{ inputs.output }}"
+        SCRIPT="jlink-windows"
+        if [ "${{ inputs.arch }}" = "x86" ]; then
+          SCRIPT="jlink-windows-x86"
+        fi
         docker run --rm \
           -v "${{ github.workspace }}:/workspace" \
           "ghcr.io/ricardoapaes/docker-java-jlink:${{ inputs.java-version }}" \
-          jlink-windows \
+          "$SCRIPT" \
           --add-modules "${{ inputs.modules }}" \
           --output "/workspace/${{ inputs.output }}"
         echo "jre-path=${OUTPUT_DIR}" >> "$GITHUB_OUTPUT"
